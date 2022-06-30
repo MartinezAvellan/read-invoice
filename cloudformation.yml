@@ -1,0 +1,123 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: read-invoice
+
+Parameters:
+  FunctionName:
+    Type: String
+    Default: read-invoice
+
+  Service:
+    Type: String
+    Default: read-invoice
+
+  Product:
+    Type: String
+    Default: invoice
+
+  BucketName:
+    Type: String
+    Default: bucket-read-invoice
+
+  MemorySize:
+    Type: String
+    Default: "256"
+
+  Timeout:
+    Type: String
+    Default: "900"
+
+  Runtime:
+    Type: String
+    Default: python3.8
+
+Mappings:
+  Tags:
+    Service:
+      value: !Ref Service
+    Product:
+      value: !Ref Product
+
+Resources:
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Join [ "", [ "/invoice/lambda/" , !Ref FunctionName ] ]
+
+  Bucket:
+    Type: AWS::S3::Bucket
+    DependsOn:
+      - ProcessingLambdaPermission
+    Properties:
+      Tags:
+        Service: !Ref Service
+        Product: !Ref Product
+      BucketName: !Ref BucketName
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: s3:ObjectCreated:*
+            Function: !GetAtt ProcessingLambdaFunction.Arn
+            Filter:
+              S3Key:
+                Rules:
+                - Name: suffix
+                  Value: .txt
+
+  ProcessingLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref ProcessingLambdaFunction
+      Principal: s3.amazonaws.com
+      SourceArn: !Sub 'arn:aws:s3:::${BucketName}'
+      SourceAccount: !Ref AWS::AccountId
+
+  ProcessingLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Tags:
+        Service: !Ref Service
+        Product: !Ref Product
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Policies:
+        - PolicyName: allowLogging
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action:
+              - logs:*
+              Resource: arn:aws:logs:*:*:*
+        - PolicyName: lambdaGetObjetcsPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action:
+              - s3:GetObject
+              Resource:  !Sub 'arn:aws:s3:::${BucketName}/*'
+
+  ProcessingLambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handler.handler
+      FunctionName: !Ref FunctionName
+      Role: !GetAtt ProcessingLambdaExecutionRole.Arn
+      Runtime: !Ref Runtime
+      MemorySize: !Ref MemorySize
+      Timeout: !Ref Timeout
+      Environment:
+        Variables:
+          REGION: !Sub ${AWS::Region}
+          TESTE: "CHUCHU COM LINGUICA"
+      Tags:
+        Service: !Ref Service
+        Product: !Ref Product

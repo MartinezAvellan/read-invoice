@@ -1,0 +1,11 @@
+service: read-invoice
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.8
+
+functions:
+  handler:
+    handler: handler.handler
