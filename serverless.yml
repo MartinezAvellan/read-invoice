@@ -2,10 +2,26 @@ service: read-invoice
 
 frameworkVersion: '3'
 
+custom:
+  bucket: read-invoice
+
 provider:
   name: aws
   runtime: python3.8
+  stage: prd
+  region: sa-east-1
+  statements:
+    - Effect: Allow
+      Action:
+        - s3:*
+      Resource: "*"
 
 functions:
-  handler:
+  startprocess:
     handler: handler.handler
+    events:
+      - s3:
+          bucket: ${self:custom.bucket}
+          event: s3:ObjectCreated:*
+          rules:
+            - suffix: .txt
