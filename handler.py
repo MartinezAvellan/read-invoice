@@ -3,9 +3,16 @@ import json
 import boto3
 import botocore
 
+from app.model.line_ten import InvoiceLineTen
+from app.model.line_twelve import InvoiceLineTwelve
+from app.model.line_zero import InvoiceLineZero
+from app.utils.constants import SQS_LOC_INVOICE
+from app.utils.utils import send_sqs_message, get_request_id
+
 
 def handler(event, context):
 
+    request_id = get_request_id(context)
     if type(event) is str:
         message = json.loads(event)
     elif type(event) is dict:
@@ -17,12 +24,36 @@ def handler(event, context):
         s3 = boto3.resource('s3', region_name='sa-east-1')
         s3_object = s3.Object(bucket_name, file_name)
         line_stream = codecs.getreader('ISO-8859-1')
+        faturas = {}
         for line in line_stream(s3_object.get()['Body']):
-            print(line)
+            msg_to_loc_queue = {}
+            if line.startswith('00', 0, 2):
+                line_zero = InvoiceLineZero(line)
+            elif line.startswith('10', 0, 2):
+                line_ten = InvoiceLineTen(line)
+            elif line.startswith('12', 0, 2):
+                line_twelve = InvoiceLineTwelve(line)
+                msg_to_loc_queue['file_name'] = file_name
+                msg_to_loc_queue['bucket_name'] = bucket_name
+                msg_to_loc_queue.update(line_zero.__dict__())
+                msg_to_loc_queue.update(line_ten.__dict__())
+                msg_to_loc_queue.update(line_twelve.__dict__())
+                faturas[msg_to_loc_queue['cpf_cnpj']] = msg_to_loc_queue
+
+        print(faturas)
+
+            #response = send_sqs_message(request_id, SQS_LOC_INVOICE, json.dumps(msg_to_loc_queue))
+            #sqs_message = "Send to SQS [SQS_LOC_INVOICE] {}. HTTPStatusCode: {} - MessageId: {}".format(
+                #SQS_LOC_INVOICE,
+                #response.get('ResponseMetadata')["HTTPStatusCode"],
+                #response.get('MessageId')
+            #)
+            #print('{}|{}| result: {}'.format(request_id, file_name, sqs_message))
     except botocore.exceptions.ClientError as e:
         if e.response['Error']['Code'] == "404":
             print("The File {} does not exist.".format(file_name))
         else:
+            print("Exception {}".format(str(e)))
             raise
 
 

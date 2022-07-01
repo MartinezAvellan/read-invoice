@@ -11,12 +11,14 @@ provider:
   runtime: python3.8
   stage: prd
   region: sa-east-1
-  statements:
-    - Effect: Allow
-      Action:
-        - s3:*
-        - dynamodb:*
-      Resource: "*"
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - s3:*
+            - dynamodb:*
+          Resource: "*"
 
 functions:
   startprocess:
@@ -39,11 +41,11 @@ resources:
             Value: ${self:service}
         AttributeDefinitions:
           -
-            AttributeName: app_client
+            AttributeName: issuer
             AttributeType: S
         KeySchema:
           -
-            AttributeName: app_client
+            AttributeName: issuer
             KeyType: HASH
         ProvisionedThroughput:
           ReadCapacityUnits: 5
