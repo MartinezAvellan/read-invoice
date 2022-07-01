@@ -17,14 +17,6 @@ provider:
         - s3:*
         - dynamodb:*
       Resource: "*"
-#  iam:
-#    role:
-#      statements:
-#        - Effect: Allow
-#          Action:
-#            - dynamodb:*
-#          Resource:
-#            - !GetAtt InvoiceDynamoDbTable.Arn
 
 functions:
   startprocess:
