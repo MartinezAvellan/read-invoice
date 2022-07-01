@@ -6,9 +6,6 @@ import botocore
 
 def handler(event, context):
 
-    print("event: ", str(event))
-    print("context: ", str(context))
-
     if type(event) is str:
         message = json.loads(event)
     elif type(event) is dict:
@@ -30,7 +27,7 @@ def handler(event, context):
 
 
 if __name__ == '__main__':
-    event = {'Records': [{'eventVersion': '2.1', 'eventSource': 'aws:s3', 'awsRegion': 'sa-east-1',
+    eeeee = {'Records': [{'eventVersion': '2.1', 'eventSource': 'aws:s3', 'awsRegion': 'sa-east-1',
                          'eventTime': '2022-06-30T17:35:48.735Z', 'eventName': 'ObjectCreated:Put',
                          'userIdentity': {'principalId': 'AWS:AIDAYT3YFZIESZ6X7UGX6'},
                          'requestParameters': {'sourceIPAddress': '194.125.72.103'},
@@ -43,4 +40,4 @@ if __name__ == '__main__':
                                            'eTag': 'dc20d6d0fa1179c8cedfc97b8f085a0e',
                                            'sequencer': '0062BDDEF4A604F717'}}}]}
 
-    handler(event, None)
+    handler(eeeee, None)

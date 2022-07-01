@@ -4,6 +4,7 @@ frameworkVersion: '3'
 
 custom:
   bucket: read-invoice
+  table: read-invoice
 
 provider:
   name: aws
@@ -14,7 +15,16 @@ provider:
     - Effect: Allow
       Action:
         - s3:*
+        - dynamodb:*
       Resource: "*"
+#  iam:
+#    role:
+#      statements:
+#        - Effect: Allow
+#          Action:
+#            - dynamodb:*
+#          Resource:
+#            - !GetAtt InvoiceDynamoDbTable.Arn
 
 functions:
   startprocess:
@@ -25,3 +35,25 @@ functions:
           event: s3:ObjectCreated:*
           rules:
             - suffix: .txt
+
+resources:
+  Resources:
+    InvoiceDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        Tags:
+          - Key: Product
+            Value: ${self:service}
+        AttributeDefinitions:
+          -
+            AttributeName: app_client
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: app_client
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+        TableName: ${self:custom.table}
