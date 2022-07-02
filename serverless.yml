@@ -11,6 +11,8 @@ provider:
   runtime: python3.8
   stage: prd
   region: sa-east-1
+  deploymentBucket:
+    name: read-invoice-deployment-bucket
   tags:
     Product: ${self:service}
   iam:
@@ -20,6 +22,7 @@ provider:
           Action:
             - s3:*
             - dynamodb:*
+            - sqs:*
           Resource: "*"
 
 functions:
