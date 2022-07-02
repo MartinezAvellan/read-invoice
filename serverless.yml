@@ -4,13 +4,15 @@ frameworkVersion: '3'
 
 custom:
   bucket: read-invoice
-  table: read-invoice
+  table: invoice-settings
 
 provider:
   name: aws
   runtime: python3.8
   stage: prd
   region: sa-east-1
+  tags:
+    Product: ${self:service}
   iam:
     role:
       statements:
@@ -36,16 +38,13 @@ resources:
       Type: 'AWS::DynamoDB::Table'
       DeletionPolicy: Retain
       Properties:
-        Tags:
-          - Key: Product
-            Value: ${self:service}
         AttributeDefinitions:
           -
-            AttributeName: issuer
+            AttributeName: emissor_invoice
             AttributeType: S
         KeySchema:
           -
-            AttributeName: issuer
+            AttributeName: emissor_invoice
             KeyType: HASH
         ProvisionedThroughput:
           ReadCapacityUnits: 5
