@@ -36,4 +36,5 @@ class InvoiceLineZero(Base):
     nome_cedente = Field(2, 102)
     cnpj_cedente = Field(262, 276)
     data_geracao = Field(210, 218)
+    data_vencimento = Field(202, 210)
 
