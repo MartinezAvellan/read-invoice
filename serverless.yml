@@ -1,0 +1,53 @@
+service: read-invoice
+
+frameworkVersion: '3'
+
+custom:
+  bucket: read-invoice
+  table: invoice-settings
+
+provider:
+  name: aws
+  runtime: python3.8
+  stage: prd
+  region: sa-east-1
+  tags:
+    Product: ${self:service}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - s3:*
+            - dynamodb:*
+            - sqs:*
+          Resource: "*"
+
+functions:
+  startprocess:
+    handler: handler.handler
+    events:
+      - s3:
+          bucket: ${self:custom.bucket}
+          event: s3:ObjectCreated:*
+          rules:
+            - suffix: .txt
+
+resources:
+  Resources:
+    InvoiceDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: emissor_invoice
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: emissor_invoice
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+        TableName: ${self:custom.table}
